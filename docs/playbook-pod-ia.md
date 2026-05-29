@@ -370,13 +370,52 @@ npm run build      # ✓ Compiled successfully (8.9s)
 - El API route usa `response_format: 'url'` que expira en ~1 hora. Para almacenamiento permanente, se subirá a Supabase Storage en Día 5.
 
 ### DÍA 5 — Procesamiento de imagen para print
+**Fecha:** 29 Mayo 2026
+**Duración:** ~20 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- API route `/api/process-image` que recibe la imagen generada
-- Redimensionamiento a resolución print-ready (300 DPI)
-- Conversión de color: RGB → perfil de color para impresión
-- Validación de tamaño mínimo (archivo > 1MB, dimensiones > 2000px)
-- Subida automática a Supabase Storage
-- Almacenamiento de URL pública para usar en Printify
+- Creación de API route `app/api/upload/route.ts`:
+  - Recibe `{ imageUrl, prompt, productType }`
+  - Descarga la imagen desde la URL temporal de DALL-E
+  - Sube a Supabase Storage bucket `designs/`
+  - Guarda registro en tabla `designs` con URL pública
+  - Retorna URL permanente de Supabase
+- Integración del upload en el flujo de generación (`app/api/generate/route.ts`):
+  - Después de generar con DALL-E, descarga y sube automáticamente a Supabase Storage
+  - El frontend recibe directamente la URL permanente
+  - El diseño queda registrado en la BD con user_id, prompt, image_url, product_type
+- Actualización de página `/disenos`:
+  - Server Component que consulta `designs` por user_id
+  - Grid de diseños con imagen, prompt, tipo de producto, status
+  - Estado vacío con link a /generar si no hay diseños
+  - Status con colores: generated (yellow), paid (blue), ordered (purple), shipped (green)
+- Migración SQL actualizada con instrucciones para crear Storage bucket `designs`
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `app/api/upload/route.ts` | API route que sube imagen a Supabase Storage + registra en BD |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `app/api/generate/route.ts` | Ahora sube a Storage + registra en BD automáticamente |
+| `app/(dashboard)/disenos/page.tsx` | Server Component que muestra diseños reales desde Supabase |
+| `supabase/migrations/001_initial_schema.sql` | Agregadas instrucciones para Storage bucket + RLS policy |
+
+**Comandos ejecutados:**
+```bash
+npm run build      # ✓ Compiled successfully (15s)
+npm run typecheck   # ✓ Sin errores
+```
+
+**Notas técnicas:**
+- Supabase Storage requiere crear el bucket `designs` manualmente desde el Dashboard, no via SQL.
+- La RLS policy para Storage es: `auth.uid()::text = (storage.foldername(name))[1]` — así cada usuario solo ve sus propios archivos.
+- El archivo se nombra como `{user_id}/{timestamp}.png` para evitar colisiones y permitir RLS por carpeta.
+- DALL-E devuelve URLs temporales (~1 hora). Es crítico subir a Storage inmediatamente después de generar para no perder la imagen.
+- `renderToString` de Server Components permite que la página /disenos sea dinámica (carga datos en cada request).
 
 ### DÍA 6 — Catálogo de productos + Precios
 **Qué se hizo:**
@@ -630,7 +669,11 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 - La validación de input en API routes con condiciones simples funciona, pero Zod es mejor para producción.
 
 ### DÍA 5 — Procesamiento de imagen
-- [Pendiente]
+- El bucket de Storage debe crearse manualmente en el Dashboard de Supabase (no via SQL). Incluir instrucciones claras en la migración SQL.
+- La RLS policy para Storage es clave: cada usuario solo debe ver sus propios archivos. Usar `storage.foldername(name)[1]` para extraer user_id del path.
+- La URL de DALL-E expira en ~1 hora. Siempre subir a Storage inmediatamente después de generar.
+- El nombrado `{user_id}/{timestamp}.png` asegura unicidad y permite RLS por carpeta.
+- Server Components con `async` pueden hacer fetch directo a Supabase sin necesidad de API route intermedia. La BD se mantiene segura porque el server component se ejecuta del lado del servidor.
 
 ### DÍA 6 — Catálogo + Precios
 - [Pendiente]

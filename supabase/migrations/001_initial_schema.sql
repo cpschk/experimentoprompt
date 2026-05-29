@@ -95,3 +95,9 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+-- Storage bucket for designs (run via Supabase Dashboard or API)
+-- 1. Create bucket: Storage → New bucket → name: "designs", public
+-- 2. Add policy: Allow authenticated users to read/write their own files
+--    CREATE POLICY "Users can manage own designs" ON storage.objects
+--      FOR ALL USING (auth.uid()::text = (storage.foldername(name))[1]);

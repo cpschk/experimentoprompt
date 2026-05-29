@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { generateImage } from '@/lib/ai'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   try {
@@ -20,12 +21,61 @@ export async function POST(request: Request) {
       )
     }
 
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const result = await generateImage({
       prompt: prompt.trim(),
       productType: product_type,
     })
 
-    return NextResponse.json({ data: result })
+    const imageResponse = await fetch(result.imageUrl)
+    if (!imageResponse.ok) {
+      throw new Error('No se pudo descargar la imagen generada')
+    }
+
+    const blob = await imageResponse.blob()
+    const buffer = Buffer.from(await blob.arrayBuffer())
+    const fileName = `${user.id}/${Date.now()}.png`
+
+    const { error: uploadError } = await supabase.storage
+      .from('designs')
+      .upload(fileName, buffer, {
+        contentType: 'image/png',
+        cacheControl: '3600',
+      })
+
+    if (uploadError) {
+      throw new Error(`Error al guardar imagen: ${uploadError.message}`)
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('designs')
+      .getPublicUrl(fileName)
+
+    const { error: dbError } = await supabase
+      .from('designs')
+      .insert({
+        user_id: user.id,
+        prompt: prompt.trim(),
+        image_url: publicUrl,
+        product_type,
+        status: 'generated',
+      })
+
+    if (dbError) {
+      throw new Error(`Error al registrar diseño: ${dbError.message}`)
+    }
+
+    return NextResponse.json({
+      data: {
+        imageUrl: publicUrl,
+        revisedPrompt: result.revisedPrompt,
+      },
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
 
