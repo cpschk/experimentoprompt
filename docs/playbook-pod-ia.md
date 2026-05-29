@@ -151,26 +151,60 @@ Plataforma web donde un usuario describe una idea, la IA genera un diseño perso
 ## 6. Plan de Ejecución (Día a Día)
 
 ### DÍA 1 — Fundaciones del proyecto
-**Qué se hizo:**
-- Creación del proyecto Next.js con App Router
-- Conexión con Supabase (proyecto + SDK)
-- Configuración de variables de entorno locales
-- Instalación de dependencias: stripe, @supabase/supabase-js, resend
-- Conexión del repo de GitHub con Vercel
-- Primer deploy automático exitoso
+**Fecha:** 29 Mayo 2026
+**Duración:** ~1 hora
+**Estado:** ✅ Completado
 
-**Archivos creados/modificados:**
-- `app/` → estructura base de carpetas
-- `.env.local` → variables de entorno
-- `package.json` → dependencias
-- `supabase/client.ts` → cliente de Supabase
-- `lib/stripe.ts` → cliente de Stripe
+**Qué se hizo:**
+- Creación del proyecto Next.js 16 con App Router, TypeScript y Tailwind CSS v4
+- Instalación de dependencias: @supabase/supabase-js, stripe, @stripe/stripe-js, resend, zod
+- Configuración de variables de entorno (.env.local con placeholders + .env.example documentado)
+- Creación de estructura de carpetas completa según AGENTS.md:
+  - `components/ui/`, `components/products/`, `components/design/`, `components/checkout/`
+  - `lib/` (clientes), `types/` (tipos compartidos)
+  - `app/api/`, `app/(marketing)/`, `app/(dashboard)/`
+- Configuración de clientes:
+  - `lib/supabase.ts` → Cliente Supabase con createClient (server-side)
+  - `lib/stripe.ts` → Cliente Stripe server-side + loadStripe para browser
+  - `types/index.ts` → Interfaces: User, Design, Order, ProductType, ApiResponse
+- Actualización de .gitignore para permitir .env.example (excluye .env, .env.local, .env.*.local)
+- Configuración de opencode.json con instructions (AGENTS.md + docs/playbook-pod-ia.md)
+- Git init + commit inicial: "Día 1: Fundaciones — Next.js 16 + Supabase + Stripe + estructura inicial"
+- Verificación: build y typecheck pasan sin errores
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `lib/supabase.ts` | Cliente Supabase (createClient con anon key) |
+| `lib/stripe.ts` | Cliente Stripe server (Stripe SDK) + browser (loadStripe) |
+| `types/index.ts` | Interfaces: User, Design, Order, ProductType, DesignStatus, OrderStatus, ApiResponse |
+| `.env.example` | Template de variables de entorno (sin secrets reales) |
+| `.gitignore` | Actualizado: excluye .env, .env.local, .env.*.local (permite .env.example) |
+| `opencode.json` | Config proyecto: instructions + skills path |
 
 **Comandos ejecutados:**
 ```bash
-npx create-next-app@latest pod-platform
-npm install @supabase/supabase-js stripe @stripe/stripe-js resend
+# Scaffolding
+npx create-next-app@latest temp-pod --typescript --tailwind --eslint --app
+Copy-Item -Path "temp-pod\*" -Destination "." -Recurse -Force
+Remove-Item -Recurse -Force temp-pod
+
+# Dependencias
+npm install @supabase/supabase-js @stripe/stripe-js stripe resend zod
+npm install -D @types/stripe
+
+# Verificación
+npm run build      # ✓ Compiled successfully (Turbopack)
+npm run typecheck   # ✓ Sin errores
+
+# Git
+git add -A && git commit -m "Día 1: Fundaciones — Next.js 16 + Supabase + Stripe + estructura inicial"
 ```
+
+**Notas técnicas importantes:**
+- `create-next-app@16` genera automáticamente un AGENTS.md con header `<!-- BEGIN:nextjs-agent-rules -->`. Este header es importante y debe preservarse, porque indica que Next.js tiene breaking changes respecto a lo que la IA conoce de versiones anteriores.
+- Stripe SDK requiere typescript: true pero la apiVersion debe omitirse (usa la latest automáticamente) o coincidir exactamente con la versión del SDK instalado.
+- Next.js 16 usa Turbopack para build (más rápido que webpack, ~6s para proyecto nuevo).
 
 ### DÍA 2 — Base de Datos + Autenticación
 **Qué se hizo:**
@@ -467,7 +501,11 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 > *(Esta sección se llena durante la ejecución con errores, ajustes, descubrimientos y optimizaciones en tiempo real)*
 
 ### DÍA 1 — Fundaciones
-- [Pendiente]
+- `create-next-app@16` genera automáticamente AGENTS.md con header `<!-- BEGIN:nextjs-agent-rules -->`. Ese header es importante para que la IA sepa que Next.js tiene breaking changes. No eliminarlo.
+- Next.js 16 usa Turbopack por defecto (build ~6s vs ~15s con webpack).
+- Stripe SDK requiere omitir `apiVersion` a menos que se use una versión exacta. Si se especifica, debe coincidir con la versión del SDK instalado.
+- El `.gitignore` por defecto de Next.js excluye `.env*` (todo), lo que incluye `.env.example`. Si quieres trackear `.env.example`, hay que cambiar el patrón a `.env`, `.env.local`, `.env.*.local`.
+- `create-next-app -Force` sobrescribe archivos existentes. Crear en subdirectorio temporal y mover después es la estrategia correcta cuando el directorio ya tiene config (AGENTS.md, opencode.json, docs/).
 
 ### DÍA 2 — Base de Datos + Auth
 - [Pendiente]

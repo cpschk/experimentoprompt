@@ -147,3 +147,9 @@ Ante cualquier problema técnico u obstáculo durante el desarrollo:
 - Todas las API keys van en .env.local, nunca hardcodeadas
 - Preferir Server Components sobre Client Components
 - Al agregar dependencias, justificar por qué se necesita
+
+## Documentación automática del progreso
+Al finalizar cada día del plan de ejecución:
+1. Actualizar `docs/playbook-pod-ia.md` sección del día con: qué se hizo, archivos creados, comandos, problemas encontrados y soluciones
+2. Actualizar sección "Lecciones Aprendidas" con aprendizajes concretos
+3. Hacer commit con mensaje: "Día X: <resumen>"
