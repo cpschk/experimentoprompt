@@ -278,13 +278,52 @@ npm run typecheck   # ✓ Sin errores
 - Rutas protegidas: proxy.ts redirige a /login si no hay sesión. Dashboard layout también verifica como doble seguridad.
 
 ### DÍA 3 — Interfaz de Usuario (Frontend)
+**Fecha:** 29 Mayo 2026
+**Duración:** ~30 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Landing page con hero, CTA, y sección "Cómo funciona"
-- Selector de producto tipo grid con imágenes de ejemplo
-- Página de generación con textarea y selector
-- Página de preview del diseño
-- Diseño responsive (mobile-first)
-- Componentes reutilizables: Header, Footer, ProductCard, DesignCard
+- Creación de componentes base reutilizables:
+  - `components/ui/Button.tsx` — Botón con variantes (primary, secondary, ghost), loading spinner, estados disabled
+  - `components/ui/Card.tsx` — Card con estado selected, hover, onClick opcional
+- Creación de componentes de producto:
+  - `components/products/ProductCard.tsx` — Tarjeta individual: emoji, nombre, descripción, precio calculado
+  - `components/products/ProductSelector.tsx` — Grid responsive (2-5 columnas) que renderiza todos los productos
+- Creación de componente de preview:
+  - `components/design/DesignPreview.tsx` — 3 estados: empty (placeholder icon), loading (spinner), loaded (imagen)
+- Configuración de precios en `lib/pricing.ts`:
+  - Catálogo completo: 5 productos con costos reales de Printify
+  - Función `calculatePrice()`: costo base + envío + $0.99 diseño × 1.6 markup
+  - Función `calculateProfit()`: precio venta - costos - stripe fee - IA cost
+- Página `/generar` completamente funcional (frontend):
+  - Paso 1: Selector de producto grid (5 productos)
+  - Paso 2: Textarea de prompt con placeholder y sugerencias
+  - Paso 3: Preview del diseño con estados vacío/loading/imagen
+  - Botón "Generar diseño — $0.99" deshabilitado hasta elegir producto + escribir prompt
+  - Botón "Comprar este diseño" que aparece después de generar
+  - Nota informativa sobre el descuento de $0.99 al comprar
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `components/ui/Button.tsx` | Botón reusable con variantes y loading |
+| `components/ui/Card.tsx` | Card reusable con selección |
+| `components/products/ProductCard.tsx` | Tarjeta de producto individual |
+| `components/products/ProductSelector.tsx` | Grid de selección de producto |
+| `components/design/DesignPreview.tsx` | Preview de diseño (empty/loading/image) |
+| `lib/pricing.ts` | Config de productos + cálculos de precio/ganancia |
+
+**Comandos ejecutados:**
+```bash
+npm run build      # ✓ Compiled successfully (7.3s)
+npm run typecheck   # ✓ Sin errores
+```
+
+**Notas técnicas:**
+- Todos los componentes de UI son Client Components ('use client') porque manejan estado interactivo
+- El grid de productos usa CSS Grid responsive: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`
+- El cálculo de precios está centralizado en `lib/pricing.ts` para mantener consistencia entre frontend y backend
+- El botón de generar se deshabilita hasta que producto AND prompt tengan valor, evitando llamadas inválidas a la API de IA
 
 ### DÍA 4 — Integración de IA (Generación de imágenes)
 **Qué se hizo:**
@@ -548,7 +587,12 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 - Los route groups (parentheses) en Next.js son útiles para separar landing pública (marketing) de dashboard privado sin afectar la URL.
 
 ### DÍA 3 — Frontend
-- [Pendiente]
+- Los componentes interactivos deben marcarse con `'use client'`. Next.js 16 Server Components son el default.
+- Tailwind CSS v4 funciona igual que v3 para utilitarias básicas. No hay cambios de sintaxis para el uso común.
+- El grid responsive con `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` funciona muy bien para selectores de producto.
+- Centralizar la lógica de precios en `lib/pricing.ts` evita duplicación entre frontend (UI) y backend (API routes).
+- Los placeholders visuales (empty state, loading state, error state) mejoran la UX cuando la API de IA tarda ~2-5s en responder.
+- El hook `useState` de React es suficiente para el estado local del formulario de generación. No necesita estado global (Context/Redux).
 
 ### DÍA 4 — Integración IA
 - [Pendiente]
