@@ -207,43 +207,75 @@ git add -A && git commit -m "Día 1: Fundaciones — Next.js 16 + Supabase + Str
 - Next.js 16 usa Turbopack para build (más rápido que webpack, ~6s para proyecto nuevo).
 
 ### DÍA 2 — Base de Datos + Autenticación
+**Fecha:** 29 Mayo 2026
+**Duración:** ~30 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Creación del esquema de base de datos en Supabase (tablas: users, designs, orders)
-- Configuración de autenticación con Google OAuth vía Supabase Auth
-- Implementación de middleware de Next.js para proteger rutas privadas
-- Páginas de login y callback
+- Instalación de `@supabase/ssr` (paquete oficial para SSR con Next.js)
+- Reestructuración de clientes Supabase:
+  - `lib/supabase/client.ts` → Browser client (createBrowserClient)
+  - `lib/supabase/server.ts` → Server component client (cookies API)
+  - `lib/supabase/middleware.ts` → Proxy/middleware helper (updateSession)
+- Creación de `proxy.ts` (Next.js 16 renombró middleware → proxy):
+  - Exporta función `proxy` que llama a updateSession
+  - Config matcher para excluir _next/static, _next/image, favicon, assets
+  - Redirige a /login si no hay sesión
+- Migración SQL completa en `supabase/migrations/001_initial_schema.sql`:
+  - Tablas: users, designs, orders con FK, constraints, índices
+  - Row Level Security (RLS) activado en todas las tablas
+  - Políticas: cada usuario solo ve/modifica sus propios datos
+  - Trigger: auto-creación de perfil al registrarse (handle_new_user)
+- Página de login (`app/auth/login/page.tsx`):
+  - Client Component con botón "Continuar con Google"
+  - Icono SVG de Google, loading state, redirect post-login
+  - Redirección automática si ya hay sesión
+- Auth callback (`app/auth/callback/route.ts`):
+  - Intercambia code por sesión (exchangeCodeForSession)
+  - Redirige a la página solicitada o /
+- Signout (`app/auth/signout/route.ts`): Server Action POST que cierra sesión
+- Dashboard layout (`app/(dashboard)/layout.tsx`):
+  - Server Component que verifica auth con getUser()
+  - Redirect a /login si no autenticado
+  - Header con nav: Generar, Mis diseños, Órdenes, Cerrar sesión
+- Landing page (`app/page.tsx`): Hero + 3 pasos + CTA "Crear mi diseño"
+- Placeholder pages: /generar, /disenos, /ordenes
 
-**Estructura de tablas:**
-```sql
--- users
-id: uuid PK
-email: text
-name: text
-avatar_url: text
-created_at: timestamp
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `proxy.ts` | Proxy Next.js 16 (reemplaza middleware.ts) — protege rutas privadas |
+| `lib/supabase/client.ts` | Cliente Supabase para browser (createBrowserClient) |
+| `lib/supabase/server.ts` | Cliente Supabase para Server Components (cookies) |
+| `lib/supabase/middleware.ts` | Helper updateSession para proxy |
+| `supabase/migrations/001_initial_schema.sql` | Schema completo: tablas + RLS + políticas + trigger |
+| `app/auth/login/page.tsx` | Login con Google OAuth |
+| `app/auth/callback/route.ts` | Callback OAuth (intercambia code → session) |
+| `app/auth/signout/route.ts` | POST para cerrar sesión |
+| `app/(dashboard)/layout.tsx` | Layout protegido con header y nav |
+| `app/(dashboard)/generar/page.tsx` | Placeholder generar diseño |
+| `app/(dashboard)/disenos/page.tsx` | Placeholder historial |
+| `app/(dashboard)/ordenes/page.tsx` | Placeholder órdenes |
 
--- designs
-id: uuid PK
-user_id: uuid FK → users
-prompt: text
-image_url: text
-product_type: text (t-shirt, hoodie, mug, case, poster)
-product_variant_id: text (ID de Printify)
-status: text (generated, paid, ordered, shipped)
-created_at: timestamp
+**Archivos eliminados:**
+| Archivo | Razón |
+|---|---|
+| `lib/supabase.ts` | Reemplazado por lib/supabase/client.ts + server.ts + middleware.ts |
 
--- orders
-id: uuid PK
-design_id: uuid FK → designs
-user_id: uuid FK → users
-stripe_session_id: text
-printify_order_id: text
-shipping_address: jsonb
-total_paid: decimal
-status: text (pending, processing, shipped, delivered)
-tracking_number: text
-created_at: timestamp
+**Comandos ejecutados:**
+```bash
+npm install @supabase/ssr
+npm run build      # ✓ Compiled successfully (8s)
+npm run typecheck   # ✓ Sin errores
 ```
+
+**Notas técnicas importantes:**
+- Next.js 16 **renombró** `middleware.ts` → `proxy.ts` y el export `middleware` → `proxy`. Usar el nombre antiguo genera warning de deprecación.
+- El paquete `@supabase/ssr` es el reemplazo moderno de `@supabase/supabase-js` para proyectos Next.js con SSR. Maneja cookies automáticamente.
+- En Supabase SSR, hay 3 contextos distintos: browser (client.ts), server component (server.ts), y middleware/proxy (middleware.ts). Cada uno usa una API de cookies diferente.
+- El trigger `handle_new_user` en la migración SQL asegura que el perfil se cree automáticamente al registrarse. No se necesita lógica extra en la app.
+- El proxy usa `getUser()` (no `getSession()`) porque verifica el token con Supabase en cada request, más seguro.
+- Rutas protegidas: proxy.ts redirige a /login si no hay sesión. Dashboard layout también verifica como doble seguridad.
 
 ### DÍA 3 — Interfaz de Usuario (Frontend)
 **Qué se hizo:**
@@ -508,7 +540,12 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 - `create-next-app -Force` sobrescribe archivos existentes. Crear en subdirectorio temporal y mover después es la estrategia correcta cuando el directorio ya tiene config (AGENTS.md, opencode.json, docs/).
 
 ### DÍA 2 — Base de Datos + Auth
-- [Pendiente]
+- En Next.js 16, `middleware.ts` está deprecated y se renombró a `proxy.ts`. El export también cambia de `middleware` a `proxy`. Ignorar esto genera advertencias de deprecación en build.
+- Supabase SSR requiere 3 clientes distintos: browser (createBrowserClient), server (createServerClient con cookies de next/headers), y middleware/proxy (createServerClient con cookies de request).
+- El trigger `handle_new_user` en SQL es la forma más limpia de sincronizar perfiles. Evita lógica extra en la app.
+- `getUser()` en el proxy es más seguro que `getSession()` porque valida el token contra Supabase. `getSession()` solo lee la cookie local.
+- El dashboard layout con Server Component + getUser() sirve como doble protección incluso si el proxy falla.
+- Los route groups (parentheses) en Next.js son útiles para separar landing pública (marketing) de dashboard privado sin afectar la URL.
 
 ### DÍA 3 — Frontend
 - [Pendiente]

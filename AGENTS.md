@@ -12,7 +12,7 @@ Plataforma web donde un usuario describe una idea, la IA genera un diseño perso
 Modelo de negocio: $0.99 por generar diseño (se descuenta si compra) + markup 60% sobre costo de producción.
 
 ## Stack tecnológico
-- **Frontend/Backend:** Next.js 16 (App Router), TypeScript
+- **Frontend/Backend:** Next.js 16 (App Router, proxy.ts en vez de middleware.ts), TypeScript
 - **Base de datos:** Supabase (PostgreSQL) + Supabase Storage
 - **Autenticación:** Supabase Auth (Google OAuth)
 - **Pagos:** Stripe (Checkout Sessions + Webhooks)
