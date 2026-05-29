@@ -11,19 +11,34 @@ export default function GenerarPage() {
   const [prompt, setPrompt] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     if (!product || !prompt.trim()) return
 
     setLoading(true)
     setImageUrl(null)
+    setError(null)
 
-    // TODO Día 4: conectar con API de IA
-    // Simulación de generación
-    await new Promise((r) => setTimeout(r, 2000))
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim(), product_type: product }),
+      })
 
-    setImageUrl('/placeholder-design.png')
-    setLoading(false)
+      const json = await res.json()
+
+      if (!res.ok) {
+        throw new Error(json.error || 'Error al generar')
+      }
+
+      setImageUrl(json.data.imageUrl)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al generar el diseño')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -65,6 +80,12 @@ export default function GenerarPage() {
         <div>
           <h3 className="mb-3 text-sm font-semibold text-gray-700">3. Vista previa</h3>
           <DesignPreview imageUrl={imageUrl} loading={loading} />
+
+          {error && (
+            <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+              {error}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col justify-end space-y-4">

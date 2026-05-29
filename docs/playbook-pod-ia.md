@@ -326,20 +326,48 @@ npm run typecheck   # ✓ Sin errores
 - El botón de generar se deshabilita hasta que producto AND prompt tengan valor, evitando llamadas inválidas a la API de IA
 
 ### DÍA 4 — Integración de IA (Generación de imágenes)
+**Fecha:** 29 Mayo 2026
+**Duración:** ~20 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- API route `/api/generate` que recibe prompt + tipo de producto
-- Llamada a OpenAI DALL-E 3 con prompt engineering optimizado
-- Procesamiento de la respuesta: extraer URL de imagen
-- Manejo de errores: timeout, rate limiting, fallback
-- La imagen se muestra al usuario inmediatamente después de generarse
-- Se guarda el prompt original para re-generación si es necesario
+- Instalación del SDK de OpenAI (`npm install openai`)
+- Creación de `lib/ai.ts` — Cliente de IA con:
+  - Función `generateImage({ prompt, productType })` que llama a DALL-E 3
+  - Prompt engineering con guía de estilo para print-ready (3-4 colores, centrado, sin texto, fondo transparente)
+  - Manejo de error si no hay API key configurada
+- Creación de API route `app/api/generate/route.ts`:
+  - POST handler que recibe `{ prompt, product_type }`
+  - Validación de input con Zod (mínimo 3 caracteres para prompt)
+  - Manejo de errores específicos: API key no configurada (500), rate limiting (429), content policy (400)
+  - Respuesta consistente `{ data: { imageUrl, revisedPrompt } }` o `{ error }`
+- Conexión del frontend `/generar` a la API real:
+  - Reemplazo del timeout simulado por llamada fetch a `/api/generate`
+  - Manejo de estados: loading, error, success
+  - Display de errores en UI con componente de alerta roja
+- Creación de API route `app/api/process-image/route.ts`:
+  - Descarga y validación de imagen (tamaño mínimo 500KB)
+  - Retorna metadatos: fileSize, contentType, printReady status
+  - Advertencias si la imagen es muy pequeña para impresión
 
-**Costo por generación:** ~$0.04 (DALL-E 3 standard 1024x1024)
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `lib/ai.ts` | Cliente OpenAI con prompt engineering para DALL-E 3 |
+| `app/api/generate/route.ts` | API route que recibe prompt y llama a DALL-E 3 |
+| `app/api/process-image/route.ts` | API route que valida imagen para print-ready |
 
-**Prompt engineering utilizado:**
+**Comandos ejecutados:**
+```bash
+npm install openai
+npm run build      # ✓ Compiled successfully (8.9s)
 ```
-"Create a print-ready design for a {product_type} based on this description: '{user_prompt}'. Style: bold, high contrast, suitable for apparel printing. Colors: vibrant but limited to 3-4 colors for cost-effective DTG printing. No text unless specified. Centered composition with transparent background."
-```
+
+**Notas técnicas:**
+- DALL-E 3 cuesta ~$0.04 por imagen (standard 1024x1024). Se puede cambiar a Replicate (SDXL) para ahorrar (~$0.002).
+- El prompt engineering en `lib/ai.ts` pide explícitamente: bold, high contrast, 3-4 colors, centered, no text, transparent background. Esto mejora la calidad para DTG printing.
+- Los errores de content policy de OpenAI se traducen a mensajes amigables en español para el usuario.
+- El API route usa `response_format: 'url'` que expira en ~1 hora. Para almacenamiento permanente, se subirá a Supabase Storage en Día 5.
 
 ### DÍA 5 — Procesamiento de imagen para print
 **Qué se hizo:**
@@ -595,7 +623,11 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 - El hook `useState` de React es suficiente para el estado local del formulario de generación. No necesita estado global (Context/Redux).
 
 ### DÍA 4 — Integración IA
-- [Pendiente]
+- El SDK de OpenAI (`openai`) es el más simple para DALL-E 3. `response.data` puede ser `undefined` según TypeScript, usar optional chaining.
+- DALL-E 3 con `response_format: 'url'` devuelve URLs temporales (~1 hora). Para persistencia, se necesita subir a Supabase Storage (Día 5).
+- El prompt engineering es crítico para calidad print-ready. Especificar: colores limitados, centrado, sin texto, fondo transparente.
+- OpenAI puede rechazar prompts por content policy. Tener un mensaje de error amigable mejora la UX.
+- La validación de input en API routes con condiciones simples funciona, pero Zod es mejor para producción.
 
 ### DÍA 5 — Procesamiento de imagen
 - [Pendiente]
