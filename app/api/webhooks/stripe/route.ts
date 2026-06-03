@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStripe } from '@/lib/stripe'
+import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/ai'
 import { sendDesignReady, sendOrderReceived } from '@/lib/email'
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     let event
     try {
-      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret)
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch {
       return NextResponse.json({ error: 'Firma inválida' }, { status: 400 })
     }

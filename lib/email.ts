@@ -1,12 +1,8 @@
 import { Resend } from 'resend'
 
-const FROM = 'onboarding@resend.dev'
+const resend = new Resend(process.env.RESEND_API_KEY || '')
 
-function getResend(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return null
-  return new Resend(apiKey)
-}
+const FROM = 'onboarding@resend.dev'
 
 function wrapTemplate(bodyHtml: string): string {
   return `<!DOCTYPE html>
@@ -54,15 +50,12 @@ export async function sendDesignReady(
   `)
 
   try {
-    const resend = getResend()
-    if (resend) {
-      await resend.emails.send({
-        from: FROM,
-        to,
-        subject: 'Tu diseño IA está listo — POD IA',
-        html,
-      })
-    }
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: 'Tu diseño IA está listo — POD IA',
+      html,
+    })
   } catch {
     // El email no debe bloquear el flujo principal
   }
@@ -95,15 +88,12 @@ export async function sendOrderReceived(
   `)
 
   try {
-    const resend = getResend()
-    if (resend) {
-      await resend.emails.send({
-        from: FROM,
-        to,
-        subject: 'Pedido recibido — POD IA',
-        html,
-      })
-    }
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: 'Pedido recibido — POD IA',
+      html,
+    })
   } catch {
     // Silencioso
   }
@@ -138,15 +128,12 @@ export async function sendOrderShipped(
   `)
 
   try {
-    const resend = getResend()
-    if (resend) {
-      await resend.emails.send({
-        from: FROM,
-        to,
-        subject: 'Tu pedido está en camino — POD IA',
-        html,
-      })
-    }
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: 'Tu pedido está en camino — POD IA',
+      html,
+    })
   } catch {
     // Silencioso
   }

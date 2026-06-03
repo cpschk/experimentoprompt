@@ -1,5 +1,9 @@
 import OpenAI from 'openai'
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+})
+
 export interface GenerateImageParams {
   prompt: string
   productType: string
@@ -22,16 +26,10 @@ Style guidelines for the design:
 - Suitable for print-on-demand products
 `
 
-function getOpenAIClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
+export async function generateImage({ prompt, productType }: GenerateImageParams): Promise<GenerateImageResult> {
+  if (!openai.apiKey) {
     throw new Error('OPENAI_API_KEY no configurada')
   }
-  return new OpenAI({ apiKey })
-}
-
-export async function generateImage({ prompt, productType }: GenerateImageParams): Promise<GenerateImageResult> {
-  const openai = getOpenAIClient()
 
   const fullPrompt = `Create a print-ready design for a ${productType} based on this description: "${prompt}".${STYLE_GUIDE}`
 
