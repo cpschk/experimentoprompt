@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validación Placeholders — Día 11</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 2rem; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .subtitle { color: #666; margin-bottom: 2rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: white; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stat-card .number { font-size: 2rem; font-weight: bold; color: #111; }
+    .stat-card .label { color: #666; font-size: 0.875rem; margin-top: 0.25rem; }
+    table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-collapse: collapse; }
+    th { background: #111; color: white; padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 1rem; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr:hover { background: #fafafa; }
+    img { max-width: 180px; max-height: 180px; border-radius: 4px; display: block; }
+    input { padding: 0.375rem 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.875rem; width: 60px; }
+    .error { color: #dc2626; font-size: 0.875rem; }
+    .failed { background: #fef2f2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Validación Placeholders — Día 11</h1>
+    <p class="subtitle">20 diseños placeholder generados localmente (sin costo API)</p>
+    <div class="stats">
+      <div class="stat-card"><div class="number">20</div><div class="label">Total diseños</div></div>
+      <div class="stat-card"><div class="number">20</div><div class="label">Generados</div></div>
+      <div class="stat-card"><div class="number">0</div><div class="label">Fallidos</div></div>
+      <div class="stat-card"><div class="number">$0.00</div><div class="label">Costo API</div></div>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Categoría</th><th>Producto</th><th>Vista previa</th><th>Calidad</th><th>Print</th><th>Alineación</th><th>Venta</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>#1</td>
+          <td>Minimalista</td>
+          <td>t-shirt</td>
+          <td><img src="01-minimalista-t-shirt.png" alt="Diseño #1" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#2</td>
+          <td>Minimalista</td>
+          <td>poster</td>
+          <td><img src="02-minimalista-poster.png" alt="Diseño #2" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#3</td>
+          <td>Minimalista</td>
+          <td>mug</td>
+          <td><img src="03-minimalista-mug.png" alt="Diseño #3" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#4</td>
+          <td>Abstracto</td>
+          <td>t-shirt</td>
+          <td><img src="04-abstracto-t-shirt.png" alt="Diseño #4" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#5</td>
+          <td>Abstracto</td>
+          <td>hoodie</td>
+          <td><img src="05-abstracto-hoodie.png" alt="Diseño #5" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#6</td>
+          <td>Abstracto</td>
+          <td>poster</td>
+          <td><img src="06-abstracto-poster.png" alt="Diseño #6" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#7</td>
+          <td>Geek</td>
+          <td>t-shirt</td>
+          <td><img src="07-geek-t-shirt.png" alt="Diseño #7" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#8</td>
+          <td>Geek</td>
+          <td>phone-case</td>
+          <td><img src="08-geek-phone-case.png" alt="Diseño #8" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#9</td>
+          <td>Geek</td>
+          <td>hoodie</td>
+          <td><img src="09-geek-hoodie.png" alt="Diseño #9" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#10</td>
+          <td>Naturaleza</td>
+          <td>t-shirt</td>
+          <td><img src="10-naturaleza-t-shirt.png" alt="Diseño #10" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#11</td>
+          <td>Naturaleza</td>
+          <td>poster</td>
+          <td><img src="11-naturaleza-poster.png" alt="Diseño #11" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#12</td>
+          <td>Naturaleza</td>
+          <td>mug</td>
+          <td><img src="12-naturaleza-mug.png" alt="Diseño #12" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#13</td>
+          <td>Tipográfico</td>
+          <td>t-shirt</td>
+          <td><img src="13-tipográfico-t-shirt.png" alt="Diseño #13" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#14</td>
+          <td>Tipográfico</td>
+          <td>hoodie</td>
+          <td><img src="14-tipográfico-hoodie.png" alt="Diseño #14" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#15</td>
+          <td>Tipográfico</td>
+          <td>poster</td>
+          <td><img src="15-tipográfico-poster.png" alt="Diseño #15" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#16</td>
+          <td>Bold</td>
+          <td>t-shirt</td>
+          <td><img src="16-bold-t-shirt.png" alt="Diseño #16" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#17</td>
+          <td>Bold</td>
+          <td>hoodie</td>
+          <td><img src="17-bold-hoodie.png" alt="Diseño #17" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#18</td>
+          <td>Bold</td>
+          <td>phone-case</td>
+          <td><img src="18-bold-phone-case.png" alt="Diseño #18" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#19</td>
+          <td>Mixed</td>
+          <td>poster</td>
+          <td><img src="19-mixed-poster.png" alt="Diseño #19" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr>
+        <tr>
+          <td>#20</td>
+          <td>Mixed</td>
+          <td>mug</td>
+          <td><img src="20-mixed-mug.png" alt="Diseño #20" loading="lazy" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+          <td><input type="number" min="1" max="5" placeholder="1-5" /></td>
+        </tr></tbody>
+    </table>
+  </div>
+</body>
+</html>

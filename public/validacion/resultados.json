@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "category": "Minimalista",
+    "productType": "t-shirt",
+    "prompt": "Círculo concéntrico en tonos grises",
+    "success": true,
+    "filePath": "/validacion/01-minimalista-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:41.611Z"
+  },
+  {
+    "id": 2,
+    "category": "Minimalista",
+    "productType": "poster",
+    "prompt": "Línea continua de una montaña",
+    "success": true,
+    "filePath": "/validacion/02-minimalista-poster.png",
+    "generatedAt": "2026-06-03T06:53:41.965Z"
+  },
+  {
+    "id": 3,
+    "category": "Minimalista",
+    "productType": "mug",
+    "prompt": "Tres barras verticales degradadas",
+    "success": true,
+    "filePath": "/validacion/03-minimalista-mug.png",
+    "generatedAt": "2026-06-03T06:53:42.621Z"
+  },
+  {
+    "id": 4,
+    "category": "Abstracto",
+    "productType": "t-shirt",
+    "prompt": "Explosión de colores acuarela",
+    "success": true,
+    "filePath": "/validacion/04-abstracto-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:42.982Z"
+  },
+  {
+    "id": 5,
+    "category": "Abstracto",
+    "productType": "hoodie",
+    "prompt": "Formas geométricas flotando",
+    "success": true,
+    "filePath": "/validacion/05-abstracto-hoodie.png",
+    "generatedAt": "2026-06-03T06:53:43.389Z"
+  },
+  {
+    "id": 6,
+    "category": "Abstracto",
+    "productType": "poster",
+    "prompt": "Manchas de tinta Rorschach",
+    "success": true,
+    "filePath": "/validacion/06-abstracto-poster.png",
+    "generatedAt": "2026-06-03T06:53:43.756Z"
+  },
+  {
+    "id": 7,
+    "category": "Geek",
+    "productType": "t-shirt",
+    "prompt": "Dragón minimalista enroscado",
+    "success": true,
+    "filePath": "/validacion/07-geek-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:44.049Z"
+  },
+  {
+    "id": 8,
+    "category": "Geek",
+    "productType": "phone-case",
+    "prompt": "Pixel art zorro espacial",
+    "success": true,
+    "filePath": "/validacion/08-geek-phone-case.png",
+    "generatedAt": "2026-06-03T06:53:44.522Z"
+  },
+  {
+    "id": 9,
+    "category": "Geek",
+    "productType": "hoodie",
+    "prompt": "Caballero con espada láser",
+    "success": true,
+    "filePath": "/validacion/09-geek-hoodie.png",
+    "generatedAt": "2026-06-03T06:53:44.827Z"
+  },
+  {
+    "id": 10,
+    "category": "Naturaleza",
+    "productType": "t-shirt",
+    "prompt": "Montañas al atardecer",
+    "success": true,
+    "filePath": "/validacion/10-naturaleza-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:45.439Z"
+  },
+  {
+    "id": 11,
+    "category": "Naturaleza",
+    "productType": "poster",
+    "prompt": "Hoja de monstera lineal",
+    "success": true,
+    "filePath": "/validacion/11-naturaleza-poster.png",
+    "generatedAt": "2026-06-03T06:53:45.835Z"
+  },
+  {
+    "id": 12,
+    "category": "Naturaleza",
+    "productType": "mug",
+    "prompt": "Olas del mar estilo ukiyo-e",
+    "success": true,
+    "filePath": "/validacion/12-naturaleza-mug.png",
+    "generatedAt": "2026-06-03T06:53:46.318Z"
+  },
+  {
+    "id": 13,
+    "category": "Tipográfico",
+    "productType": "t-shirt",
+    "prompt": "Formas que evocan creatividad",
+    "success": true,
+    "filePath": "/validacion/13-tipográfico-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:46.754Z"
+  },
+  {
+    "id": 14,
+    "category": "Tipográfico",
+    "productType": "hoodie",
+    "prompt": "Líneas y símbolos decorativos",
+    "success": true,
+    "filePath": "/validacion/14-tipográfico-hoodie.png",
+    "generatedAt": "2026-06-03T06:53:47.486Z"
+  },
+  {
+    "id": 15,
+    "category": "Tipográfico",
+    "productType": "poster",
+    "prompt": "Caos de letras artístico",
+    "success": true,
+    "filePath": "/validacion/15-tipográfico-poster.png",
+    "generatedAt": "2026-06-03T06:53:47.963Z"
+  },
+  {
+    "id": 16,
+    "category": "Bold",
+    "productType": "t-shirt",
+    "prompt": "Tigre con rayas de fuego",
+    "success": true,
+    "filePath": "/validacion/16-bold-t-shirt.png",
+    "generatedAt": "2026-06-03T06:53:48.241Z"
+  },
+  {
+    "id": 17,
+    "category": "Bold",
+    "productType": "hoodie",
+    "prompt": "Calavera chicano dorada",
+    "success": true,
+    "filePath": "/validacion/17-bold-hoodie.png",
+    "generatedAt": "2026-06-03T06:53:48.636Z"
+  },
+  {
+    "id": 18,
+    "category": "Bold",
+    "productType": "phone-case",
+    "prompt": "Rayo eléctrico neón",
+    "success": true,
+    "filePath": "/validacion/18-bold-phone-case.png",
+    "generatedAt": "2026-06-03T06:53:49.050Z"
+  },
+  {
+    "id": 19,
+    "category": "Mixed",
+    "productType": "poster",
+    "prompt": "Mapa del tesoro vintage",
+    "success": true,
+    "filePath": "/validacion/19-mixed-poster.png",
+    "generatedAt": "2026-06-03T06:53:49.669Z"
+  },
+  {
+    "id": 20,
+    "category": "Mixed",
+    "productType": "mug",
+    "prompt": "Constelación astronómica",
+    "success": true,
+    "filePath": "/validacion/20-mixed-mug.png",
+    "generatedAt": "2026-06-03T06:53:50.087Z"
+  }
+]

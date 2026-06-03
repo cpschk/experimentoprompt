@@ -13,7 +13,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "validate:batch": "tsx scripts/batch-validate-ia.ts",
-    "validate:review": "tsx scripts/generate-review.ts"
+    "validate:review": "tsx scripts/generate-review.ts",
+    "validate:placeholders": "tsx scripts/generate-placeholders.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.7.0",
