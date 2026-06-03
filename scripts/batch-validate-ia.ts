@@ -13,7 +13,7 @@ interface PromptEntry {
   category: string
   productType: string
   prompt: string
-  fullPrompt: string
+  fullPrompt?: string
 }
 
 interface GenerationResult {

@@ -37,14 +37,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Diseño no encontrado' }, { status: 404 })
     }
 
-    const { data: existingOrder } = await supabase
+    const { data: orderRecord } = await supabase
       .from('orders')
-      .select('id, printify_order_id')
+      .select('id, printify_order_id, shipping_address')
       .eq('design_id', design_id)
-      .single()
+      .maybeSingle()
 
-    if (existingOrder?.printify_order_id) {
-      return NextResponse.json({ data: { order: existingOrder } })
+    if (orderRecord?.printify_order_id) {
+      return NextResponse.json({ data: { order: orderRecord } })
     }
 
     const productConfig = PRODUCTS.find((p) => p.id === design.product_type)
@@ -88,19 +88,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: msg }, { status: 502 })
     }
 
+    // Build shipping address from Stripe data stored by webhook
+    const shipping = orderRecord?.shipping_address as {
+      line1?: string
+      line2?: string | null
+      city?: string
+      state?: string
+      postal_code?: string
+      country?: string
+      name?: string | null
+    } | null
+
+    const nameParts = shipping?.name ? shipping.name.split(' ') : [user.email?.split('@')[0] || 'Cliente']
+    const firstName = nameParts[0] || 'Cliente'
+    const lastName = nameParts.slice(1).join(' ') || ''
+
+    const shippingAddress = {
+      first_name: firstName,
+      last_name: lastName,
+      address1: shipping?.line1 || 'Dirección pendiente',
+      city: shipping?.city || 'Ciudad',
+      country: shipping?.country || 'US',
+      zip: shipping?.postal_code || '00000',
+    }
+
     let printifyOrder: PrintifyOrder
     try {
       printifyOrder = await createOrder({
         shopId,
         lineItems: [{ productId: printifyProduct.id, variantId: variantIds[0], quantity: 1 }],
-        shippingAddress: {
-          first_name: user.email?.split('@')[0] || 'Cliente',
-          last_name: '',
-          address1: 'Dirección pendiente',
-          city: 'Ciudad',
-          country: 'US',
-          zip: '00000',
-        },
+        shippingAddress,
       })
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al crear orden en Printify'
@@ -112,6 +129,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       stripe_session_id,
       printify_order_id: printifyOrder.id,
+      shipping_address: orderRecord?.shipping_address || shippingAddress,
       status: 'pending',
     })
 
