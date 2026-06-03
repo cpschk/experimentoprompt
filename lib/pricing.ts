@@ -1,5 +1,11 @@
 export type ProductType = 't-shirt' | 'hoodie' | 'mug' | 'phone-case' | 'poster'
 
+export interface PrintifyConfig {
+  blueprintId: number
+  printProviderId: number
+  variantMapping: Record<string, number>
+}
+
 export interface ProductConfig {
   id: ProductType
   label: string
@@ -8,6 +14,7 @@ export interface ProductConfig {
   baseCost: number
   shipping: number
   variants: { size: string; color: string }[]
+  printify?: PrintifyConfig
 }
 
 export const PRODUCTS: ProductConfig[] = [
@@ -28,6 +35,7 @@ export const PRODUCTS: ProductConfig[] = [
       { size: 'L', color: 'White' },
       { size: 'XL', color: 'White' },
     ],
+    printify: { blueprintId: 6, printProviderId: 0, variantMapping: {} },
   },
   {
     id: 'hoodie',
@@ -42,6 +50,7 @@ export const PRODUCTS: ProductConfig[] = [
       { size: 'L', color: 'Black' },
       { size: 'XL', color: 'Black' },
     ],
+    printify: { blueprintId: 37, printProviderId: 0, variantMapping: {} },
   },
   {
     id: 'mug',
@@ -51,6 +60,7 @@ export const PRODUCTS: ProductConfig[] = [
     baseCost: 5.12,
     shipping: 5.99,
     variants: [{ size: '11oz', color: 'White' }],
+    printify: { blueprintId: 2, printProviderId: 0, variantMapping: {} },
   },
   {
     id: 'phone-case',
@@ -64,6 +74,7 @@ export const PRODUCTS: ProductConfig[] = [
       { size: 'iPhone 16', color: 'Clear' },
       { size: 'Samsung S24', color: 'Clear' },
     ],
+    printify: { blueprintId: 36, printProviderId: 0, variantMapping: {} },
   },
   {
     id: 'poster',
@@ -73,6 +84,7 @@ export const PRODUCTS: ProductConfig[] = [
     baseCost: 6.50,
     shipping: 4.99,
     variants: [{ size: '40x50cm', color: 'Matte' }],
+    printify: { blueprintId: 25, printProviderId: 0, variantMapping: {} },
   },
 ]
 

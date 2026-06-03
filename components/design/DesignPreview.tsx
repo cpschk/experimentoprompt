@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 interface DesignPreviewProps {
   imageUrl: string | null
   loading: boolean
@@ -35,11 +37,13 @@ export function DesignPreview({ imageUrl, loading }: DesignPreviewProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <img
+    <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <Image
         src={imageUrl}
         alt="Diseño generado"
-        className="aspect-square w-full object-cover"
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover"
       />
     </div>
   )

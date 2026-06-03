@@ -417,71 +417,302 @@ npm run typecheck   # ✓ Sin errores
 - DALL-E devuelve URLs temporales (~1 hora). Es crítico subir a Storage inmediatamente después de generar para no perder la imagen.
 - `renderToString` de Server Components permite que la página /disenos sea dinámica (carga datos en cada request).
 
-### DÍA 6 — Catálogo de productos + Precios
+### DÍA 6 — Cliente Printify + Catalog API
+**Fecha:** 29 Mayo 2026
+**Duración:** ~15 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Definición de productos en Printify (cada uno con variantes: talla, color)
-- Mapeo de productos Printify a IDs internos
-- Cálculo de precios finales: Costo Printify + costo envío promedio + $0.99 diseño + markup 60%
-- Tabla de configuración en `lib/pricing.ts`
+- Creación de `lib/printify.ts` — Cliente completo de la API REST de Printify con:
+  - Funciones para catálogo: `getShops()`, `getCatalogBlueprints()`, `getBlueprintVariants()`
+  - Funciones para productos en tienda: `getShopProducts()`
+  - Funciones para órdenes: `createOrder()`, `getOrder()`
+  - Tipados completos para todas las respuestas (PrintifyShop, PrintifyBlueprint, PrintifyVariant, PrintifyProduct, PrintifyOrder)
+  - Manejo de errores con HTTP status codes
+  - Cabeceras de autenticación con Bearer token desde env variable
+- Actualización de `lib/pricing.ts` — Agregados campos Printify a cada producto:
+  - `printify.blueprintId`: ID del blueprint en Printify (t-shirt=6, hoodie=37, mug=2, phone-case=36, poster=25)
+  - `printify.printProviderId`: ID del print provider (default 0, se configura con Printify account real)
+  - `printify.variantMapping`: Mapa de variante {talla|color} → variantId (empty, se llena con configure endpoint)
+  - Nueva interfaz `PrintifyConfig` con estos campos
+- Creación de `app/api/printify/catalog/route.ts`:
+  - GET /api/printify/catalog → lista todos los blueprints del catálogo Printify
+  - GET /api/printify/catalog?blueprintId=X&printProviderId=Y → lista variantes de un blueprint+provider
+  - Respuesta consistente `{ data }` o `{ error }`
+- Creación de `app/api/printify/configure/route.ts`:
+  - GET /api/printify/configure → auto-descubre y mapea variantes Printify a nuestro catálogo
+  - Para cada producto en pricing.ts, busca el blueprint y sus variantes
+  - Intenta matchear automáticamente size + color a las variantes Printify
+  - Retorna JSON completo listo para copiar a variantMapping
+  - Incluye lista de shops disponibles
+- Verificación: typecheck y lint pasan sin errores
 
-```typescript
-// lib/pricing.ts
-export const PRODUCTS = {
-  't-shirt': {
-    printifyId: '123', // ID real del producto en Printify
-    baseCost: 7.32,
-    shipping: 4.99,
-    markupPercent: 0.60,
-    variants: [
-      { size: 'S', color: 'Black', printifyVariantId: '456' },
-      { size: 'M', color: 'Black', printifyVariantId: '457' },
-    ]
-  },
-}
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `lib/printify.ts` | Cliente Printify API (catálogo, productos, órdenes) |
+| `app/api/printify/catalog/route.ts` | API route para explorar catálogo Printify |
+| `app/api/printify/configure/route.ts` | API route para auto-configurar variant mappings |
 
-export function calculatePrice(productType: string): number {
-  const p = PRODUCTS[productType]
-  return Math.round((p.baseCost + p.shipping) * (1 + p.markupPercent) * 100) / 100
-}
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `lib/pricing.ts` | Agregados campos `printify` (blueprintId, printProviderId, variantMapping) a cada producto |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ Sin errores (0 errors, 6 warnings pre-existentes)
 ```
 
-### DÍA 7 — Stripe Checkout (Pago completo)
+**Notas técnicas importantes:**
+- Printify requiere 3 IDs para identificar una variante: blueprintId (tipo de producto), printProviderId (quién lo imprime), variantId (talla/color específico)
+- Los blueprint IDs usados son IDs estándar del catálogo Printify: Bella+Canvas 3001 (6), Champion G100 (37), mug cerámica 11oz (2), funda iPhone (36), póster semimate (25)
+- `printProviderId` se deja en 0 porque depende del print provider que tenga configurado el usuario en su tienda Printify real
+- El endpoint `/configure` intenta auto-descubrir los variant IDs comparando título de variante con size+color, pero requiere una API key válida de Printify para funcionar
+- Se necesita crear cuenta en Printify + generar API key + agregar PRINTIFY_API_KEY a .env.local para que estas rutas funcionen
+
+### DÍA 7 — Stripe Checkout (Pago $0.99 + Pago completo)
+**Fecha:** 29 Mayo 2026
+**Duración:** ~20 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- API route `/api/checkout` que crea Stripe Checkout Session
-- El session incluye: precio final, metadata con design_id y user_id
-- Webhook `/api/webhooks/stripe` que escucha eventos
-- Al recibir `checkout.session.completed`: actualiza BD, dispara orden Printify
-- Manejo de webhooks: verificación de firma HMAC, idempotencia
-- Página de éxito y cancelación después del checkout
+- **Flujo de pago de $0.99 (generación):**
+  - `app/api/checkout-design/route.ts` — POST endpoint que:
+    - Verifica autenticación del usuario
+    - Valida prompt (min 3 chars) y product_type
+    - Crea Stripe Checkout Session por $0.99 (unit_amount: 99)
+    - Guarda metadata: prompt, product_type, user_id
+    - Retorna `{ url, session_id }` para redirigir a Stripe
+  - `app/api/checkout-design/confirm/route.ts` — POST endpoint que:
+    - Recibe `{ session_id }` después del pago exitoso
+    - Recupera la sesión de Stripe y verifica `payment_status === 'paid'`
+    - Confirma que la sesión pertenece al usuario autenticado
+    - Lee metadata (prompt, product_type) de la sesión
+    - Llama a DALL-E 3 para generar la imagen
+    - Sube la imagen a Supabase Storage (`{user_id}/{timestamp}.png`)
+    - Crea registro en tabla `designs` con status='generated'
+    - Retorna `{ design: { id, image_url, prompt, ... } }`
+- **Flujo de pago completo (compra de producto):**
+  - `app/api/checkout/route.ts` — POST endpoint que:
+    - Verifica autenticación
+    - Recibe `{ design_id, product_type, variant_id }`
+    - Calcula precio final: `calculatePrice(productType) - $0.99`
+    - Crea Stripe Checkout Session con el precio descontado
+    - Guarda metadata: design_id, user_id, product_type, variant_id
+    - Retorna `{ url }` para redirigir a Stripe
+- **Webhook de Stripe:**
+  - `app/api/webhooks/stripe/route.ts` — POST endpoint que:
+    - Verifica firma HMAC con `STRIPE_WEBHOOK_SECRET`
+    - Maneja `checkout.session.completed` para:
+      - **Diseño ($0.99):** Lee metadata, genera imagen con DALL-E 3, sube a Storage, crea design record (fallback silencioso si el frontend ya lo hizo)
+      - **Producto:** Crea orden en tabla `orders`, actualiza diseño a status='paid'
+    - Siempre retorna 200 OK (Stripe espera confirmación)
+- **Frontend actualizado (`/generar`):**
+  - Nuevo flujo de 3 pasos: (1) Pagar $0.99 → (2) Stripe redirect → (3) IA genera
+  - `PaymentConfirmer` component: maneja la confirmación post-pago
+  - Botón "Comprar este diseño" llama a `/api/checkout` con el design_id
+  - Manejo de estados: loading, error, confirmación pendiente
+  - URL params `?success=true&session_id=xxx` para detectar retorno de Stripe
+  - `router.replace('/generar')` después de confirmar para limpiar URL params
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `app/api/checkout-design/route.ts` | Crea Stripe Session por $0.99 para generar diseño |
+| `app/api/checkout-design/confirm/route.ts` | Verifica pago + genera diseño con IA |
+| `app/api/checkout/route.ts` | Crea Stripe Session para compra de producto ($ - $0.99) |
+| `app/api/webhooks/stripe/route.ts` | Webhook Stripe (verifica firma, actualiza BD) |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `app/(dashboard)/generar/page.tsx` | Integración completa del flujo de pago Stripe |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ 0 errores, 6 warnings pre-existentes
+```
+
+**Notas técnicas importantes:**
+- El flujo de pago es: Click "Generar" → Stripe Checkout Session ($0.99) → Redirect a Stripe → Pay → Redirect a /generar?success=true → Confirm endpoint → DALL-E genera → Supabase Storage → Diseño visible
+- Para que Stripe funcione en desarrollo, se necesita `stripe listen --forward-to localhost:3000/api/webhooks/stripe` (Stripe CLI) o usar webhook forwarding manual
+- El webhook usa `constructEvent` que requiere `STRIPE_WEBHOOK_SECRET`. Sin este secret, el webhook no funciona (retorna 400)
+- El endpoint `/confirm` verifica que la sesión de Stripe pertenezca al usuario autenticado (comparando metadata.user_id con user.id). Esto evita que un usuario confirme el pago de otro.
+- El diseño se genera descontando $0.99 del precio final (`calculatePrice - 0.99`). Si no hay diseño fee pagado, el precio completo aplica.
+- El `PaymentConfirmer` component usa un `useRef` para evitar llamadas duplicadas al endpoint de confirmación en Strict Mode de React 18.
 
 ### DÍA 8 — Integración Printify (Órdenes automáticas)
-**Qué se hizo:**
-- API route `/api/printify/create-order`
-- Autenticación con API key de Printify (Bearer token)
-- Búsqueda o creación del producto en Printify con el diseño subido
-- Creación de orden: dirección de envío + producto + variante + imagen
-- Manejo de respuesta: guardar `printify_order_id` en la BD
-- Manejo de errores: Printify retorna 429 (rate limit) → retry con backoff
+**Fecha:** 29 Mayo 2026
+**Duración:** ~20 min
+**Estado:** ✅ Completado
 
-**Documentación Printify API usada:**
-- `POST /v1/shops/{shop_id}/orders.json` → crear orden
-- `GET /v1/shops/{shop_id}/orders/{order_id}.json` → tracking
+**Qué se hizo:**
+- **`lib/printify.ts` — Nueva función `createPrintifyProduct`:**
+  - `POST /v1/shops/{shop_id}/products.json` para crear un producto con el diseño personalizado
+  - Parámetros: shopId, title, blueprintId, printProviderId, variantIds[], imageUrl
+  - Configura print_areas con la imagen del diseño en posición "front"
+  - Retorna el ID del producto creado en Printify
+- **`app/api/checkout/route.ts` — Actualizado con shipping address:**
+  - Agregado `shipping_address_collection` a la Stripe Checkout Session
+  - Países permitidos: US, MX, ES, AR, CO, CL, PE
+  - Stripe recolecta dirección de envío durante el checkout
+- **`app/api/printify/create-order/route.ts` — Orden automática Printify:**
+  - POST endpoint que recibe `{ design_id, stripe_session_id }`
+  - Verifica autenticación + que el diseño existe y pertenece al usuario
+  - Busca orden existente (idempotencia — no duplicar)
+  - Valida config Printify (printProviderId, variantMapping)
+  - Crea producto en Printify con la imagen del diseño via API
+  - Crea orden en Printify con el producto + variante por defecto
+  - Guarda `printify_order_id` en la tabla orders (upsert)
+  - Actualiza diseño a status='ordered'
+  - Manejo de errores: Printify API key, shop ID, provider config
+- **`app/api/webhooks/stripe/route.ts` — Webhook mejorado:**
+  - Al recibir `checkout.session.completed` para producto:
+    - Extrae dirección de envío del campo `shipping` de Stripe
+    - Almacena `shipping_address` como JSONB en la tabla orders
+    - Actualiza diseño a status='paid'
+    - Llama a `/api/printify/create-order` para crear la orden Printify automáticamente
+    - Si Printify falla, la orden queda en BD para reintento manual
+- **`app/(dashboard)/ordenes/page.tsx` — Página de órdenes real:**
+  - Server Component que consulta orders + designs (join) desde Supabase
+  - Muestra: imagen del diseño, nombre del producto, prompt, estado
+  - Estados con colores: pending (yellow), processing (blue), shipped (purple), delivered (green)
+  - Muestra ID de Printify y número de tracking cuando están disponibles
+  - Link de rastreo para USPS cuando hay tracking
+  - Estado vacío cuando no hay órdenes
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `app/api/printify/create-order/route.ts` | Crea producto + orden en Printify automáticamente |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `lib/printify.ts` | Nueva función `createPrintifyProduct` + interfaces |
+| `app/api/checkout/route.ts` | Agregado `shipping_address_collection` |
+| `app/api/webhooks/stripe/route.ts` | Manejo de shipping address + trigger Printify order |
+| `app/(dashboard)/ordenes/page.tsx` | Server Component con órdenes reales desde BD |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ 0 errores, 7 warnings pre-existentes
+```
+
+**Notas técnicas importantes:**
+- Printify requiere 2 pasos para una orden con diseño personalizado: (1) crear producto en la tienda con la imagen, (2) crear orden referenciando ese producto. No es posible crear orden directamente con una imagen sin producto.
+- El producto se crea con `price: 0` porque Printify cobra el costo base + envío automáticamente al crear la orden. El precio de venta lo manejamos nosotros via Stripe.
+- `shipping_method: 1` = Standard (el más común en Printify). Puede cambiar según la configuración del shop.
+- El webhook llama a `/api/printify/create-order` mediante un fetch interno (desde el servidor). Esto mantiene la lógica de Printify encapsulada en su propio endpoint.
+- Se usa `upsert` en la tabla orders para evitar duplicados si el webhook se dispara múltiples veces (idempotencia de Stripe).
+- Si `PRINTIFY_API_KEY` o `PRINTIFY_SHOP_ID` no están configurados, la orden se crea en BD con status 'pending' sin enviar a Printify. Se puede procesar manualmente después.
 
 ### DÍA 9 — Dashboard del usuario
+**Fecha:** 29 Mayo 2026
+**Duración:** ~15 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Grid con todos los diseños generados por el usuario
-- Cada tarjeta muestra: preview, producto, estado, fecha
-- Página de detalle de orden: imagen, tracking, timeline
-- Botón de "Comprar este diseño" para diseños no comprados aún
-- Botón de descarga del diseño original (alta resolución)
+- **`app/api/download-design/[id]/route.ts` — Descarga de imagen original:**
+  - GET endpoint que recibe el ID del diseño
+  - Verifica autenticación y ownership (solo el dueño puede descargar)
+  - Fetch de la imagen desde Supabase Storage
+  - Retorna la imagen como archivo descargable con Content-Disposition: attachment
+  - Nombre de archivo: `diseno-{id}.png`
+- **`app/api/buy-design/[id]/route.ts` — Compra directa desde historial:**
+  - POST endpoint (form action, sin JS requerido)
+  - Verifica que el diseño existe y pertenece al usuario
+  - Valida que el diseño está en status 'generated' (no comprado aún)
+  - Crea Stripe Checkout Session con shipping_address_collection
+  - Redirige directamente a Stripe
+  - Si hay error, redirige a /disenos?error=... con mensaje descriptivo
+- **`app/(dashboard)/disenos/page.tsx` — Página de diseños mejorada:**
+  - Status labels en español: Listo / Comprado / En producción / Enviado
+  - Status con badges de colores (yellow/blue/purple/green)
+  - Nombres de productos en español (Camiseta, Hoodie, Taza, Funda, Póster)
+  - Botón "Comprar este diseño" solo para diseños en status 'generated'
+  - Botón de descarga (ícono SVG) para todos los diseños
+  - Fecha formateada en español (ej: "29 may 2026")
+  - Diseño de tarjeta mejorado con layout flex
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `app/api/download-design/[id]/route.ts` | Descarga de imagen original como archivo |
+| `app/api/buy-design/[id]/route.ts` | Compra directa desde el historial |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `app/(dashboard)/disenos/page.tsx` | Diseño mejorado + estado español + botones comprar/descargar |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ 0 errores, 7 warnings pre-existentes
+```
+
+**Notas técnicas importantes:**
+- El endpoint de descarga usa `fetch(design.image_url)` para obtener la imagen desde Supabase Storage y retornarla como attachment. Esto evita exponer la URL de Storage directamente.
+- El endpoint de compra (`/api/buy-design/[id]`) usa `NextResponse.redirect()` en lugar de `NextResponse.json()` porque recibe un form POST del Server Component. El navegador sigue la redirección a Stripe automáticamente.
+- Los Server Components pueden renderizar forms HTML que POST a API routes. Esto permite interacciones sin JavaScript del lado del cliente.
+- `params` en Next.js 16 App Router es una Promise. Se debe usar `const { id } = await params` en route handlers.
 
 ### DÍA 10 — Notificaciones por email
+**Fecha:** 29 Mayo 2026
+**Duración:** ~15 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Integración con Resend para envío de emails transaccionales
-- Email de confirmación de generación: "Tu diseño está listo"
-- Email de confirmación de compra: "Tu pedido fue recibido"
-- Email de envío: "Tu pedido está en camino" + tracking number
-- Templates HTML responsivos
+- **`lib/email.ts` — Cliente Resend completo:**
+  - Cliente inicializado con API key desde env (`RESEND_API_KEY`)
+  - Template HTML responsivo base con `wrapTemplate()`: header (POD IA), body, footer
+  - 3 funciones de envío:
+    - `sendDesignReady(to, imageUrl, prompt, siteUrl)` → "Tu diseño IA está listo"
+      - Muestra preview de la imagen generada, el prompt usado
+      - CTA: "Ver mis diseños" (link a /disenos)
+      - Footer: "Puedes comprarlo impreso en una camiseta, hoodie, taza o más"
+    - `sendOrderReceived(to, orderId, imageUrl, productName, siteUrl)` → "Pedido recibido"
+      - Muestra resumen del pedido (producto, ID), preview del diseño
+      - CTA: "Ver estado del pedido" (link a /ordenes)
+    - `sendOrderShipped(to, orderId, trackingNumber, siteUrl)` → "Tu pedido está en camino"
+      - Muestra número de rastreo, enlace directo a USPS
+      - CTA: "Rastrear pedido", "Ir a mis órdenes"
+  - Todos los catch son silenciosos (el email no debe bloquear el flujo principal)
+- **Webhook Stripe actualizado (`app/api/webhooks/stripe/route.ts`):**
+  - En `handleDesignPayment`: después de generar + subir diseño, envía `sendDesignReady` al email del usuario (desde `session.customer_details.email`)
+  - En `handleProductPayment`: después de insertar orden, busca diseño + order en BD, envía `sendOrderReceived` con el nombre del producto y preview
+  - Extracción de `customer_details.email` del evento Stripe
+- **Printify create-order actualizado (`app/api/printify/create-order/route.ts`):**
+  - Después de crear orden Printify, si `printifyOrder.tracking_number` está disponible, envía `sendOrderShipped` con tracking link
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `lib/email.ts` | Cliente Resend + 3 funciones de email + templates HTML |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `app/api/webhooks/stripe/route.ts` | Email diseño listo + email pedido recibido |
+| `app/api/printify/create-order/route.ts` | Email tracking cuando Printify lo devuelve |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ 0 errores, 7 warnings pre-existentes
+```
+
+**Notas técnicas importantes:**
+- Resend SDK v6 usa `resend.emails.send()` con objeto: `{ from, to, subject, html }`. El `from` por defecto en plan gratis es `onboarding@resend.dev`.
+- `customer_details.email` está disponible en el evento `checkout.session.completed` de Stripe cuando el usuario proporciona su email durante el checkout. Stripe recolecta email automáticamente si no se especifica `customer_creation: 'always'`.
+- Los templates HTML son responsivos (tabla centrada, max-width 480px) con diseño minimalista: fondo gris claro, tarjeta blanca, header negro, footer gris.
+- Todos los envíos de email tienen try/catch silencioso para no bloquear el flujo principal (pago, generación, creación de orden).
+- El tracking number de Printify generalmente no está disponible inmediatamente al crear la orden. Se actualiza asincrónicamente cuando Printify procesa el envío. Para tracking completo, se necesita un webhook de Printify o polling periódico.
 
 ### DÍA 11 — Validación de IA (20 diseños de prueba)
 **Qué se hizo:**
@@ -508,13 +739,47 @@ export function calculatePrice(productType: string): number {
 - Corrección de bugs encontrados
 
 ### DÍA 13 — Landing page finalizada + SEO
+**Fecha:** 29 Mayo 2026
+**Duración:** ~15 min
+**Estado:** ✅ Completado
+
 **Qué se hizo:**
-- Hero section pulida: "Describe tu idea. La IA la diseña. Te la enviamos."
-- Galería de ejemplos reales (de la validación del Día 11)
-- Sección "Cómo funciona" con 3 pasos visuales
-- Meta tags: title, description, Open Graph, Twitter Cards
-- Sitemap.xml + robots.txt
-- Optimización de rendimiento: imágenes lazy, bundles JS reducidos
+- **Hero section pulida:** "Tu idea, impresa." con gradiente, badge de tecnología, subtítulo claro, y dos CTAs (Crear + Cómo funciona)
+- **Sección "Cómo funciona"** con 3 pasos visuales (Describe → Genera → Recibe) en cards con sombra y números
+- **Sección de productos:** Grid de 5 productos con emoji y descripción
+- **Galería de estilos:** 6 categorías visuales (Minimalista, Abstracto, Geek, Naturaleza, Tipográfico, Bold) con emojis
+- **CTA final:** Sección oscura con llamado a la acción
+- **Meta tags completos:**
+  - title template, description, metadataBase
+  - Open Graph (title, description, locale es_MX, type website, image)
+  - Twitter Cards (summary_large_image)
+  - Robots (index, follow)
+  - JSON-LD structured data (Product schema)
+- **sitemap.xml** con rutas principales + prioridades
+- **robots.txt** que permite /, bloquea /api/ y /auth/, apunta a sitemap
+- **Header sticky** con backdrop blur
+- **Footer** con créditos y badges de tecnología
+- **Idioma:** `<html lang="es">` (era "en")
+- OG image placeholder en `public/images/og.svg`
+
+**Archivos creados:**
+| Archivo | Propósito |
+|---|---|
+| `app/sitemap.ts` | Sitemap XML dinámico |
+| `app/robots.ts` | Robots.txt dinámico |
+| `public/images/og.svg` | OG image placeholder para redes sociales |
+
+**Archivos modificados:**
+| Archivo | Cambio |
+|---|---|
+| `app/layout.tsx` | Metadata completa (OG, Twitter, JSON-LD), lang="es" |
+| `app/page.tsx` | Landing completa: hero, pasos, productos, galería, CTA, footer, schema |
+
+**Comandos ejecutados:**
+```bash
+npm run typecheck   # ✓ Sin errores
+npm run lint        # ✓ 0 errores, 7 warnings pre-existentes
+```
 
 ### DÍA 14 — Lanzamiento en producción
 **Qué se hizo:**
@@ -675,20 +940,43 @@ Comisión Stripe = Precio venta × 0.029 + 0.30
 - El nombrado `{user_id}/{timestamp}.png` asegura unicidad y permite RLS por carpeta.
 - Server Components con `async` pueden hacer fetch directo a Supabase sin necesidad de API route intermedia. La BD se mantiene segura porque el server component se ejecuta del lado del servidor.
 
-### DÍA 6 — Catálogo + Precios
-- [Pendiente]
+### DÍA 6 — Cliente Printify + Catalog API
+- Printify API usa blueprintId (global, fijo) + printProviderId (varía por tienda) + variantId (varía por proveedor). Se necesitan los 3 para crear una orden.
+- La API de Printify no tiene un endpoint directo de "print providers por blueprint" en el plan gratuito. Se necesita inspeccionar el catálogo manualmente o tener un producto ya configurado en la tienda.
+- El `variantMapping` en pricing.ts es específico de cada shop + print provider. No se puede hardcodear de forma universal. Por eso se deja vacío y se llena con el endpoint /configure cuando el usuario tenga su Printify account.
+- Printify catalog usa IDs numéricos para blueprints (ej: Bella+Canvas 3001 = 6). Estos IDs son estables entre tiendas y se pueden hardcodear.
+- La función `createOrder` requiere el shipping_method como ID numérico. En Printify, 1 = Standard.
 
 ### DÍA 7 — Stripe Checkout
-- [Pendiente]
+- El nuevo ESLint plugin de React Compiler (`react-hooks/set-state-in-effect`) incluido en Next.js 16 prohíbe llamar `setState` directamente dentro de `useEffect`. Para flujos post-pago, es mejor extraer la lógica a un componente hijo separado y usar `useRef` para evitar llamadas duplicadas.
+- Stripe Checkout Session es más simple que PaymentElement para el MVP: solo requiere `line_items`, `success_url`, `cancel_url`. No necesita manejar inputs de tarjeta.
+- El flow de redirect a Stripe y vuelta requiere manejar URL params (`?success=true&session_id=xxx`). `router.replace()` limpia los params después de procesar.
+- Para desarrollo local, Stripe webhooks requieren `stripe listen --forward-to` o un túnel (ngrok). Sin el webhook funcionando, la generación solo ocurre vía el endpoint `/confirm` que llama el frontend.
+- El precio descontado ($0.99) se calcula en el backend. Stripe maneja centavos (unit_amount en cents). `$0.99 = 99 cents`.
+- Es importante verificar que la sesión de Stripe pertenece al usuario autenticado para evitar que un usuario usurpe el pago de otro.
 
 ### DÍA 8 — Printify API
-- [Pendiente]
+- Printify requiere 2 pasos para una orden personalizada: crear producto (POST /products.json) → crear orden (POST /orders.json). No es posible saltarse el paso de creación de producto.
+- El producto Printify necesita `print_areas` con `variant_ids` y `placeholders` para asignar la imagen a las variantes correctas. Cada placeholder tiene una posición (front, back, etc).
+- Al crear el producto en Printify, `price: 0` es válido para productos que solo se usarán en órdenes (el costo se maneja al crear la orden).
+- Para idempotencia con webhooks de Stripe, usar `upsert` en lugar de `insert` en la tabla orders. Stripe puede enviar el mismo evento múltiples veces.
+- Stripe Checkout Session tiene un campo `shipping` que contiene la dirección recolectada durante el checkout. Se puede acceder como `session.shipping.address`.
+- El endpoint de create-order puede fallar si Printify no está configurado. Es mejor crear la orden en BD primero (status='pending') y actualizar después con el printify_order_id.
+- El tipo `Session` de Stripe SDK no incluye `shipping` en su definición TypeScript. Para acceder a `event.data.object.shipping`, se debe castear a `unknown` primero y luego al tipo deseado.
+- En Next.js App Router, los Server Components pueden hacer joins en consultas Supabase: `supabase.from('orders').select('*, designs(*)')`.
 
 ### DÍA 9 — Dashboard
-- [Pendiente]
+- Next.js 16 App Router route handlers con `params` dinámicos requieren `Promise<{ id: string }>` y `await params`. Es un cambio de Next.js 15 donde params era sincrónico.
+- Los Server Components pueden renderizar forms con `action="/api/..."` y method POST que funcionan sin JavaScript. El API route recibe el form submission y puede responder con `NextResponse.redirect()`.
+- Para descargar archivos desde API routes, se usa `new NextResponse(blob, { headers: { 'Content-Disposition': 'attachment; filename=...' } })`. Esto funciona tanto para imágenes como PDFs.
+- Es buena práctica verificar ownership (design.user_id === user.id) en endpoints de descarga y compra. El proxy.ts y dashboard layout ya verifican auth, pero los endpoints deben verificar ownership también.
 
 ### DÍA 10 — Emails
-- [Pendiente]
+- Resend SDK v6 usa `new Resend(apiKey)` y `resend.emails.send()`. El método es síncrono y devuelve una Promise con `{ data, error }`.
+- `send()` falla silenciosamente si no hay API key configurada. Es mejor verificar `process.env.RESEND_API_KEY` antes de llamar para evitar errores innecesarios.
+- Stripe devuelve `customer_details.email` en `checkout.session.completed` si el usuario ingresó email durante el checkout. Esto es más confiable que buscar el email en la tabla users.
+- Los templates HTML para emails deben ser inline styles (no CSS externo) porque la mayoría de clientes de email (Gmail, Outlook) ignoran `<style>` en el `<head>`.
+- Es buena práctica tener una función `wrapTemplate()` que envuelve el contenido en el layout base (header + footer). Así los templates individuales solo definen el body.
 
 ### DÍA 11 — Validación IA (20 diseños)
 - [Pendiente]

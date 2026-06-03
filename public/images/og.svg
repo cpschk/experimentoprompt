@@ -1,0 +1,5 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#111111"/>
+  <text x="600" y="280" text-anchor="middle" font-family="system-ui, sans-serif" font-size="80" font-weight="bold" fill="white">POD IA</text>
+  <text x="600" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="#a1a1aa">Tu idea, impresa.</text>
+</svg>

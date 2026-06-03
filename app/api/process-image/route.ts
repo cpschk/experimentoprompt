@@ -6,7 +6,6 @@ interface ProcessRequest {
 }
 
 const MIN_FILE_SIZE = 500 * 1024 // 500KB
-const MIN_DIMENSION = 1024
 
 export async function POST(request: Request) {
   try {
