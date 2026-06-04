@@ -25,7 +25,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">POD IA</h1>
           <Link
-            href="/login"
+            href="/auth/login"
             className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700"
           >
             Comenzar
@@ -53,7 +53,7 @@ export default function Home() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-4">
               <Link
-                href="/login"
+                href="/auth/login"
                 className="rounded-lg bg-gray-900 px-8 py-3 text-base font-medium text-white transition hover:bg-gray-700 shadow-sm"
               >
                 Crear mi diseño — $0.99
@@ -168,7 +168,7 @@ export default function Home() {
               Por $0.99. Sin suscripciones. Sin compromiso.
             </p>
             <Link
-              href="/login"
+              href="/auth/login"
               className="mt-8 inline-block rounded-lg bg-white px-8 py-3 text-base font-medium text-gray-900 transition hover:bg-gray-100 shadow-sm"
             >
               Crear mi diseño

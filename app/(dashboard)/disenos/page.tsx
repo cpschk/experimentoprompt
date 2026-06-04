@@ -29,7 +29,7 @@ export default async function DisenosPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/auth/login')
 
   const { data: designs } = await supabase
     .from('designs')

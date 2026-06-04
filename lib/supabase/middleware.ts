@@ -32,13 +32,13 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     request.nextUrl.pathname !== '/' &&
-    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth/login') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
     !request.nextUrl.pathname.startsWith('/_next') &&
     !request.nextUrl.pathname.startsWith('/favicon')
   ) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
