@@ -5,12 +5,6 @@ import { generateImage } from '@/lib/ai'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { session_id } = body
 
@@ -24,15 +18,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'El pago no está completo' }, { status: 400 })
     }
 
-    const userId = session.metadata?.user_id
-    if (userId !== user.id) {
-      return NextResponse.json({ error: 'Esta sesión no te pertenece' }, { status: 403 })
-    }
-
     const prompt = session.metadata?.prompt
     const productType = session.metadata?.product_type
+    const userId = session.metadata?.user_id
 
-    if (!prompt || !productType) {
+    if (!prompt || !productType || !userId) {
       return NextResponse.json({ error: 'Metadatos de sesión inválidos' }, { status: 400 })
     }
 
@@ -45,8 +35,9 @@ export async function POST(request: Request) {
 
     const blob = await imageResponse.blob()
     const buffer = Buffer.from(await blob.arrayBuffer())
-    const fileName = `${user.id}/${Date.now()}.png`
+    const fileName = `${userId}/${Date.now()}.png`
 
+    const supabase = await createClient()
     const { error: uploadError } = await supabase.storage
       .from('designs')
       .upload(fileName, buffer, {
@@ -65,7 +56,7 @@ export async function POST(request: Request) {
     const { error: dbError, data: design } = await supabase
       .from('designs')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         prompt,
         image_url: publicUrl,
         product_type: productType,

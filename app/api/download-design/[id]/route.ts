@@ -9,11 +9,6 @@ export async function GET(
     const { id } = await params
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const { data: design, error } = await supabase
       .from('designs')
       .select('*')
@@ -22,10 +17,6 @@ export async function GET(
 
     if (error || !design) {
       return NextResponse.json({ error: 'Diseño no encontrado' }, { status: 404 })
-    }
-
-    if (design.user_id !== user.id) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
     const imageRes = await fetch(design.image_url)

@@ -5,12 +5,6 @@ import { calculatePrice, PRODUCTS } from '@/lib/pricing'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { design_id, product_type, variant_id } = body
 
@@ -26,9 +20,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 400 })
     }
 
+    const supabase = await createClient()
+    const { data: design } = await supabase
+      .from('designs')
+      .select('user_id')
+      .eq('id', design_id)
+      .single()
+
     const fullPrice = calculatePrice(product_type)
     const priceAfterDiscount = Math.round((fullPrice - 0.99) * 100)
-
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const session = await getStripe().checkout.sessions.create({
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       },
       metadata: {
         design_id,
-        user_id: user.id,
+        user_id: design?.user_id || crypto.randomUUID(),
         product_type,
         variant_id,
         total_paid: String(priceAfterDiscount / 100),

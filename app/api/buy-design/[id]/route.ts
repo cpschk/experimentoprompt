@@ -11,10 +11,6 @@ export async function POST(
     const { id } = await params
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', _request.url))
-    }
 
     const { data: design, error } = await supabase
       .from('designs')
@@ -24,10 +20,6 @@ export async function POST(
 
     if (error || !design) {
       return NextResponse.redirect(new URL('/disenos?error=not-found', _request.url))
-    }
-
-    if (design.user_id !== user.id) {
-      return NextResponse.redirect(new URL('/disenos?error=unauthorized', _request.url))
     }
 
     if (design.status !== 'generated') {
@@ -64,7 +56,7 @@ export async function POST(
       },
       metadata: {
         design_id: design.id,
-        user_id: user.id,
+        user_id: design.user_id || crypto.randomUUID(),
         product_type: design.product_type,
         variant_id: 'default',
         total_paid: String(priceAfterDiscount / 100),

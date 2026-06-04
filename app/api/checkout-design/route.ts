@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
-import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { prompt, product_type } = body
 
@@ -27,6 +20,7 @@ export async function POST(request: Request) {
       )
     }
 
+    const guestId = crypto.randomUUID()
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const session = await getStripe().checkout.sessions.create({
@@ -44,7 +38,7 @@ export async function POST(request: Request) {
       metadata: {
         prompt: prompt.trim(),
         product_type,
-        user_id: user.id,
+        user_id: guestId,
       },
       success_url: `${siteUrl}/generar?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/generar`,
