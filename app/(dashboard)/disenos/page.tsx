@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import type { DesignStatus } from '@/types'
 
 const STATUS_LABELS: Record<DesignStatus, string> = {
@@ -29,7 +28,9 @@ export default async function DisenosPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) {
+    return <div className="p-8 text-center text-gray-500">Inicia sesión para ver tus diseños.</div>
+  }
 
   const { data: designs } = await supabase
     .from('designs')

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { ProductSelector } from '@/components/products/ProductSelector'
 import { DesignPreview } from '@/components/design/DesignPreview'
 import { Button } from '@/components/ui/Button'
@@ -55,6 +56,17 @@ export default function GenerarPage() {
   const [designId, setDesignId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const ensureSession = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        await supabase.auth.signInAnonymously()
+      }
+    }
+    ensureSession()
+  }, [])
 
   const sessionId = searchParams.get('session_id')
   const needsConfirmation = searchParams.get('success') === 'true' && !!sessionId && !imageUrl
