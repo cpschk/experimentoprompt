@@ -1,8 +1,9 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-})
+function getOpenAI(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY || ''
+  return new OpenAI({ apiKey })
+}
 
 export interface GenerateImageParams {
   prompt: string
@@ -27,6 +28,8 @@ Style guidelines for the design:
 `
 
 export async function generateImage({ prompt, productType }: GenerateImageParams): Promise<GenerateImageResult> {
+  const openai = getOpenAI()
+
   if (!openai.apiKey) {
     throw new Error('OPENAI_API_KEY no configurada')
   }

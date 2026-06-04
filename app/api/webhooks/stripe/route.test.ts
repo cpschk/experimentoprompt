@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
 
+const { mockConstructEvent } = vi.hoisted(() => ({
+  mockConstructEvent: vi.fn(),
+}))
+
 vi.mock('@/lib/stripe', () => ({
-  stripe: {
+  getStripe: vi.fn(() => ({
     webhooks: {
-      constructEvent: vi.fn(),
+      constructEvent: mockConstructEvent,
     },
-  },
+  })),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -22,7 +26,7 @@ vi.mock('@/lib/email', () => ({
   sendOrderReceived: vi.fn(),
 }))
 
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/ai'
 import { sendDesignReady, sendOrderReceived } from '@/lib/email'
@@ -70,7 +74,7 @@ describe('POST /api/webhooks/stripe', () => {
   it('retorna 400 si la firma es inválida', async () => {
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test'
 
-    ;(stripe.webhooks.constructEvent as any).mockImplementation(() => {
+    ;(mockConstructEvent as any).mockImplementation(() => {
       throw new Error('Firma inválida')
     })
 
@@ -103,7 +107,7 @@ describe('POST /api/webhooks/stripe', () => {
       },
     }
 
-    ;(stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent)
+    ;(mockConstructEvent as any).mockReturnValue(mockEvent)
 
     const mockUpload = vi.fn(() => Promise.resolve({ error: null }))
     const mockPublicUrl = vi.fn(() => ({ data: { publicUrl: 'https://mock.design.png' } }))
@@ -187,7 +191,7 @@ describe('POST /api/webhooks/stripe', () => {
       },
     }
 
-    ;(stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent)
+    ;(mockConstructEvent as any).mockReturnValue(mockEvent)
 
     const mockInsert = vi.fn(() => Promise.resolve({ error: null }))
     const mockUpdate = vi.fn(() => Promise.resolve({ error: null }))
@@ -250,7 +254,7 @@ describe('POST /api/webhooks/stripe', () => {
       data: { object: {} },
     }
 
-    ;(stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent)
+    ;(mockConstructEvent as any).mockReturnValue(mockEvent)
 
     const request = createWebhookRequest('body-string', 'valid-sig')
     const response = await POST(request)
@@ -274,7 +278,7 @@ describe('POST /api/webhooks/stripe', () => {
       },
     }
 
-    ;(stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent)
+    ;(mockConstructEvent as any).mockReturnValue(mockEvent)
 
     const request = createWebhookRequest('body-string', 'valid-sig')
     const response = await POST(request)

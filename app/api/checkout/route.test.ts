@@ -1,22 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
 
-// Mock external services before importing route
+const { mockCreateCheckoutSession } = vi.hoisted(() => ({
+  mockCreateCheckoutSession: vi.fn(),
+}))
+
 vi.mock('@/lib/stripe', () => ({
-  stripe: {
+  getStripe: vi.fn(() => ({
     checkout: {
       sessions: {
-        create: vi.fn(),
+        create: mockCreateCheckoutSession,
       },
     },
-  },
+  })),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }))
 
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 
 function createMockRequest(body: any, headers?: Record<string, string>) {
@@ -46,7 +49,7 @@ describe('POST /api/checkout', () => {
     ;(createClient as any).mockResolvedValue(mockSupabase)
 
     const mockSession = { url: 'https://checkout.stripe.com/session/test' }
-    ;(stripe.checkout.sessions.create as any).mockResolvedValue(mockSession)
+    ;(mockCreateCheckoutSession as any).mockResolvedValue(mockSession)
 
     const request = createMockRequest({
       design_id: 'design-456',
@@ -59,9 +62,9 @@ describe('POST /api/checkout', () => {
 
     expect(response.status).toBe(200)
     expect(data.data.url).toBe('https://checkout.stripe.com/session/test')
-    expect(stripe.checkout.sessions.create).toHaveBeenCalledOnce()
+    expect(mockCreateCheckoutSession).toHaveBeenCalledOnce()
 
-    const callArgs = (stripe.checkout.sessions.create as any).mock.calls[0][0]
+    const callArgs = (mockCreateCheckoutSession as any).mock.calls[0][0]
     expect(callArgs.mode).toBe('payment')
     expect(callArgs.metadata.design_id).toBe('design-456')
     expect(callArgs.metadata.user_id).toBe('user-123')
@@ -89,7 +92,7 @@ describe('POST /api/checkout', () => {
 
     expect(response.status).toBe(401)
     expect(data.error).toBe('No autorizado')
-    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled()
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
   })
 
   it('retorna 400 si faltan campos requeridos', async () => {
@@ -110,7 +113,7 @@ describe('POST /api/checkout', () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toContain('Faltan campos requeridos')
-    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled()
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
   })
 
   it('retorna 400 si product_type no existe', async () => {
@@ -132,7 +135,7 @@ describe('POST /api/checkout', () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toBe('Producto no encontrado')
-    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled()
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
   })
 
   it('retorna 500 si Stripe arroja error', async () => {
@@ -143,7 +146,7 @@ describe('POST /api/checkout', () => {
     }
     ;(createClient as any).mockResolvedValue(mockSupabase)
 
-    ;(stripe.checkout.sessions.create as any).mockRejectedValue(new Error('Stripe API Error'))
+    ;(mockCreateCheckoutSession as any).mockRejectedValue(new Error('Stripe API Error'))
 
     const request = createMockRequest({
       design_id: 'design-456',
@@ -170,7 +173,7 @@ describe('POST /api/checkout', () => {
     ;(createClient as any).mockResolvedValue(mockSupabase)
 
     const mockSession = { url: 'https://checkout.stripe.com/session/test' }
-    ;(stripe.checkout.sessions.create as any).mockResolvedValue(mockSession)
+    ;(mockCreateCheckoutSession as any).mockResolvedValue(mockSession)
 
     const request = createMockRequest({
       design_id: 'design-456',
@@ -180,7 +183,7 @@ describe('POST /api/checkout', () => {
 
     await POST(request)
 
-    const callArgs = (stripe.checkout.sessions.create as any).mock.calls[0][0]
+    const callArgs = (mockCreateCheckoutSession as any).mock.calls[0][0]
     expect(callArgs.success_url).toBe('https://pod-ia.example.com/ordenes?success=true')
     expect(callArgs.cancel_url).toBe('https://pod-ia.example.com/generar')
 

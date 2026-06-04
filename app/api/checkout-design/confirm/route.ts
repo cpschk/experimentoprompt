@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/ai'
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'session_id requerido' }, { status: 400 })
     }
 
-    const session = await stripe.checkout.sessions.retrieve(session_id)
+    const session = await getStripe().checkout.sessions.retrieve(session_id)
 
     if (session.payment_status !== 'paid') {
       return NextResponse.json({ error: 'El pago no está completo' }, { status: 400 })
