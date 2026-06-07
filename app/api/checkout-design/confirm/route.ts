@@ -28,20 +28,34 @@ export async function POST(request: Request) {
 
     const result = await generateImage({ prompt, productType })
 
-    const imageResponse = await fetch(result.imageUrl)
-    if (!imageResponse.ok) {
-      throw new Error('No se pudo descargar la imagen generada')
+    let buffer: Buffer
+    let contentType = 'image/png'
+
+    if (result.imageUrl.startsWith('data:')) {
+      const matches = result.imageUrl.match(/^data:([^;]+);base64,(.+)$/)
+      if (!matches) {
+        throw new Error('Formato de data URL inválido')
+      }
+      contentType = matches[1]
+      buffer = Buffer.from(matches[2], 'base64')
+    } else {
+      const imageResponse = await fetch(result.imageUrl)
+      if (!imageResponse.ok) {
+        throw new Error('No se pudo descargar la imagen generada')
+      }
+      const blob = await imageResponse.blob()
+      buffer = Buffer.from(await blob.arrayBuffer())
+      contentType = blob.type || contentType
     }
 
-    const blob = await imageResponse.blob()
-    const buffer = Buffer.from(await blob.arrayBuffer())
-    const fileName = `${userId}/${Date.now()}.png`
+    const ext = contentType === 'image/svg+xml' ? 'svg' : 'png'
+    const fileName = `${userId}/${Date.now()}.${ext}`
 
     const supabase = await createClient()
     const { error: uploadError } = await supabase.storage
       .from('designs')
       .upload(fileName, buffer, {
-        contentType: 'image/png',
+        contentType,
         cacheControl: '3600',
       })
 
@@ -73,16 +87,16 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
 
-    if (message.includes('API key') || message.includes('no configurada')) {
+    if (message.includes('No hay API key de IA')) {
       return NextResponse.json(
         { error: 'La API de IA no está configurada. Contacta al administrador.' },
         { status: 500 }
       )
     }
 
-    if (message.includes('rate limit') || message.includes('429')) {
+    if (message.includes('quota') || message.includes('rate limit') || message.includes('429') || message.includes('Too Many Requests')) {
       return NextResponse.json(
-        { error: 'Demasiadas solicitudes. Espera un momento e intenta de nuevo.' },
+        { error: 'Se agotó la cuota de la API de IA. Intenta más tarde o contacta al administrador.' },
         { status: 429 }
       )
     }

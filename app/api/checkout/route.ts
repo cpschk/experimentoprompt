@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     const fullPrice = calculatePrice(product_type)
     const priceAfterDiscount = Math.round((fullPrice - 0.99) * 100)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const siteUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const session = await getStripe().checkout.sessions.create({
       mode: 'payment',
