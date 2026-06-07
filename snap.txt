@@ -1,0 +1,26 @@
+uid=20_0 RootWebArea "POD IA — Tu idea, impresa" url="http://localhost:3000/generar"
+  uid=20_1 banner
+    uid=20_2 link "pod-ia-platform" url="http://localhost:3000/"
+      uid=20_3 StaticText "pod-ia-platform"
+    uid=20_4 navigation
+      uid=20_5 link "Generar" url="http://localhost:3000/generar"
+        uid=20_6 StaticText "Generar"
+  uid=20_7 main
+    uid=20_8 heading "Generar diseño" level="2"
+    uid=20_9 StaticText "Elige un producto, describe tu idea y la IA creará un diseño único."
+    uid=20_10 heading "1. Elige tu producto" level="3"
+    uid=20_11 button "👕 Camiseta Premium unisex, 100% algodón $21.28"
+    uid=20_12 button "🧥 Hoodie Premium unisex con capucha $36.59"
+    uid=20_13 button "☕ Taza Cerámica 11oz, apta microondas $19.36"
+    uid=20_14 button "📱 Funda Silicone para iPhone/Samsung $26.74"
+    uid=20_15 button "🖼️ Póster Papel mate premium 40x50cm $19.97"
+    uid=20_16 heading "2. Describe tu ideapara camiseta" level="3"
+    uid=20_17 textbox "Ej: Un sol con gafas de sol en estilo minimalista, colores cálidos, centrado..." multiline value="Un lobo geométrico minimalista en colores azul y negro, centrado, estilo tribal moderno"
+    uid=20_18 StaticText "Sé descriptivo: estilo, colores, elementos, posición."
+    uid=20_19 heading "3. Vista previa" level="3"
+    uid=20_20 StaticText "Tu diseño aparecerá aquí"
+    uid=20_21 StaticText "Describe tu idea arriba y genera"
+    uid=20_22 button "Generar diseño — $0.99" disableable disabled
+    uid=20_23 StaticText "$0.99 por generar. Si compras el producto, se descuenta del total."
+  uid=20_24 button "Open Next.js Dev Tools" expandable haspopup="menu"
+  uid=20_25 alert atomic live="assertive" relevant="additions text"
