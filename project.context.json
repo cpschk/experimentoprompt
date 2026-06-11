@@ -1,0 +1,99 @@
+{
+  "$schema": "https://project-os.ai/context-schema/v1",
+  "version": "1.0.0",
+  "project": {
+    "id": "experimentoprompt",
+    "name": "experimentoprompt",
+    "type": "ecommerce",
+    "status": "building",
+    "description": "Print-on-demand platform: user describes an idea → AI generates a design → Printify prints and ships",
+    "elevator_pitch": "The automated POD platform where ideas become products instantly",
+    "tags": ["pod", "ecommerce", "print-on-demand", "ai", "generative"],
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-06-08T00:00:00Z",
+    "urls": {
+      "repository": "https://github.com/cpsch/experimentoprompt",
+      "documentation": "projects/experimentoprompt/docs/playbook-pod-ia.md"
+    }
+  },
+  "business": {
+    "model": "b2c",
+    "value_proposition": "Turn any idea into a physical product with AI-generated designs, printed and shipped automatically",
+    "pricing": {
+      "strategy": "competitive",
+      "currency": "USD",
+      "tiers": [
+        { "name": "Design Generation", "price": 0.99, "billing": "one_time", "features": ["AI-generated design from description", "Refundable if product is purchased"] },
+        { "name": "Full Product", "price": 19.99, "billing": "one_time", "features": ["Design generation included", "Premium printing", "Worldwide shipping"] }
+      ],
+      "free_tier": false
+    },
+    "revenue": {
+      "current_mrr": 0,
+      "target_mrr": 5000
+    }
+  },
+  "audience": {
+    "primary_persona": {
+      "name": "Creative Shopper",
+      "role": "Online consumer looking for unique products",
+      "age_range": "20-45",
+      "goals": ["Find unique personalized products", "Express creativity through physical items"],
+      "pain_points": ["Generic mass-produced products", "Complex design tools", "High minimum order quantities"],
+      "channels": ["instagram", "pinterest", "search", "tiktok"],
+      "tech_savviness": "medium"
+    }
+  },
+  "brand": {
+    "name": "experimentoprompt",
+    "voice": {
+      "tone": "playful",
+      "values": ["Creativity", "Simplicity", "Quality"],
+      "personality_traits": ["Playful", "Innovative", "Accessible"]
+    }
+  },
+  "products": [
+    {
+      "id": "pod-platform",
+      "name": "POD IA Platform",
+      "type": "digital",
+      "status": "building",
+      "description": "Full POD platform: AI design generation + Printify fulfillment",
+      "features": [
+        { "id": "ai-generation", "name": "AI Design Generation", "priority": "must", "status": "done" },
+        { "id": "stripe-checkout", "name": "Stripe Checkout", "priority": "must", "status": "done" },
+        { "id": "supabase-auth", "name": "Supabase Auth", "priority": "must", "status": "done" },
+        { "id": "printify-integration", "name": "Printify Integration", "priority": "must", "status": "done" },
+        { "id": "email-notifications", "name": "Email Notifications", "priority": "should", "status": "done" },
+        { "id": "design-history", "name": "Design History Dashboard", "priority": "should", "status": "done" },
+        { "id": "order-tracking", "name": "Order Tracking", "priority": "could", "status": "planned" }
+      ]
+    }
+  ],
+  "marketing": {
+    "channels_active": [
+      { "name": "seo", "status": "planned" },
+      { "name": "social_organic", "status": "planned" }
+    ]
+  },
+  "technical": {
+    "stack": {
+      "frontend": "Next.js 16 + React 19 + TypeScript + Tailwind v4",
+      "backend": "Next.js API Routes + Supabase",
+      "database": "PostgreSQL via Supabase",
+      "infrastructure": "Vercel (auto-deploy from GitHub)"
+    },
+    "architecture_pattern": "modular_monolith",
+    "apis": [
+      { "name": "Supabase Auth", "provider": "Supabase", "purpose": "Authentication + PostgreSQL + Storage", "critical": true },
+      { "name": "Stripe Checkout", "provider": "Stripe", "purpose": "Payment processing + webhooks", "critical": true },
+      { "name": "OpenAI DALL-E 3", "provider": "OpenAI", "purpose": "AI design generation", "critical": true },
+      { "name": "Printify API", "provider": "Printify", "purpose": "Product ordering + fulfillment", "critical": true },
+      { "name": "Resend Email", "provider": "Resend", "purpose": "Transactional emails", "critical": false }
+    ],
+    "security": {
+      "auth_method": "Supabase Auth (Google OAuth + email)",
+      "compliance_required": ["GDPR"]
+    }
+  }
+}
